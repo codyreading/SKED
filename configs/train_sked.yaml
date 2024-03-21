@@ -13,7 +13,7 @@ device: cuda
 dir_guidance: true
 eval_freq: 1
 exp_dir: ../exps/
-expname: cat_a cat wearing a chef hat
+expname: car
 fov_range: !!python/tuple
 - 40
 - 80
@@ -45,10 +45,10 @@ sil_lambda: 1.0
 sketch_H: 128
 sketch_W: 128
 sketch_lambda: 5.0e-06
-sketch_path: ../data/cat
+sketch_path: ../data/car
 sparsity_lambda: 0.0005
 staged_rendering: true
-text: a cat wearing a chef hat
+text: a red sportscar
 train_type: gen
 update_extra_interval: 16
 use_2d_sketch: true
