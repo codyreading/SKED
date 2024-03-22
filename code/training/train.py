@@ -227,9 +227,8 @@ class Train:
 
     @torch.no_grad()
     def eval_step(self, data):
-
-        rays_o = data['rays_o'] # [B, N, 3]
-        rays_d = data['rays_d'] # [B, N, 3]
+        rays_o = self.sketch_rays['rays_o'][0:1]
+        rays_d = self.sketch_rays['rays_d'][0:1]
         gt = data['gt']
 
         if self.train_type == 'rec':# [B, H, W, 3/4]
