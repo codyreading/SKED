@@ -34,15 +34,8 @@ class Sketches:
         for f in sketch_files:
             f_sketch = os.path.join(sketch_dir, 'sketches', f)
             sketch = cv2.imread(f_sketch, cv2.IMREAD_UNCHANGED)
-            sketch = (sketch / 255.).astype('float32')
-            if sketch.shape[-1] == 4:
-                # sketches is RGBA images
-                sketch = cv2.cvtColor(sketch, cv2.COLOR_BGRA2RGBA)
-                sketch = utils.rgba2rgb(sketch, input_type='numpy')
-
-            # turn rgb mask to binary image
-            sketch = cv2.cvtColor((sketch * 255.).astype('uint8'), cv2.COLOR_RGB2GRAY)
-            sketch = (sketch < 128).astype('float32')
+            sketch = (sketch > 128).any(-1)
+            sketch = sketch.astype('float32')
 
             h = sketch.shape[0]
             if self.H is None and self.W is None:
@@ -55,15 +48,8 @@ class Sketches:
             bbox = extract_bbox(sketch)
             self.bounding_boxes.append(bbox)
 
-            s = (sketch * 255).astype('uint8')
-            r = cv2.rectangle(s, (bbox[0], bbox[1]), (bbox[2], bbox[3]), 128, 2)
-            # extract silhouette of sketch
-            silhouette = Image.open(os.path.join(sketch_dir, 'shapes', f))
-            silhouette = np.array(silhouette)
-            silhouette = cv2.resize(silhouette, (self.W, self.H), interpolation=cv2.INTER_AREA)
-            silhouette = (silhouette / 255.).astype('float32')
-            silhouette[sketch > 0.5] = 1
-            self.silhouettes.append(silhouette)
+            # silhouettes and sketches are the same
+            self.silhouettes.append(sketch)
 
         self.silhouettes = torch.from_numpy(np.stack(self.silhouettes, axis=0)).to(device, dtype=torch.float32)
         self.sketches = torch.from_numpy(np.stack(self.sketches, axis=0)).to(device, dtype=torch.float32)
@@ -120,4 +106,3 @@ def fill_sketch_func(sketch):
     points = contours[0]
     mask = cv2.fillPoly(mask, [points], 255)
     return (mask / 255.).astype('float')
-
