@@ -8,6 +8,7 @@ sys.path.append('../../code/models')
 import utils.general as utils
 import utils.rend_utils as rend_utils
 import cv2
+import torch.nn.functional as F
 
 
 
@@ -77,6 +78,7 @@ class Sketches:
         self.distances = torch.load(self.distances_file)
         self.distances = torch.from_numpy(self.distances).to(device, torch.float32)
         self.distances = self.distances.unsqueeze(1)
+        self.distances = F.interpolate( self.distances, size=(self.H, self.W), mode='bilinear', align_corners=False)
 
     def get_sketches(self, indices=None):
         if indices is not None:

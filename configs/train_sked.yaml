@@ -42,8 +42,8 @@ render_normals: true
 save_freq: 10
 scale: 1
 sil_lambda: 1.0
-sketch_H: 512
-sketch_W: 512
+sketch_H: 256
+sketch_W: 256
 sketch_lambda: 5.0e-06
 sketch_path: ../data/car
 sparsity_lambda: 0.0005

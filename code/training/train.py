@@ -59,7 +59,7 @@ class Train:
         self.dataloader = self.dataset.dataloader()
 
         val_scale = 1 if self.opts.train_type == 'rec' else 4
-        self.val_dataset = NeRFDataset(data_dir, self.opts, type='val', H = H * val_scale , W = W * val_scale)
+        self.val_dataset = NeRFDataset(data_dir, self.opts, type='val', H = self.opts.sketch_H , W = self.opts.sketch_W)
         self.val_dataloader = self.val_dataset.dataloader()
         self.valiter = itertools.cycle(iter(self.val_dataloader))
 
