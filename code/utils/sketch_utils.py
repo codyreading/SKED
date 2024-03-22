@@ -22,22 +22,24 @@ class Sketches:
         self.H = H
         self.W = W
         self.sketches = []
-        num_sketches = 4
-        radius = 2.5
-
-
-        radius = torch.as_tensor([radius]).repeat(num_sketches).to(device).to(torch.float32)
-        thetas = torch.as_tensor([0, 0, 0, -89.999]).to(device).to(torch.float32)
-        phis = torch.as_tensor([0, 90, 180, 0]).to(device).to(torch.float32)
-        thetas = torch.deg2rad(thetas)
-        phis = torch.deg2rad(phis)
-
-        self.poses = rend_utils.get_poses(radius=radius, thetas=thetas, phis=phis, device=device)
-        #rend_utils.visualize_poses(self.poses.cpu().numpy())
 
         self.transforms_file = os.path.join(sketch_dir, 'meta_data.pkl')
         self.transforms = utils.load_pickle(self.transforms_file)
         self.intrinsics = self.transforms['intrinsics']
+        self.poses = self.transforms["poses"]
+
+        # Rotate poses for new coordinate conventions
+        axes = ["y", "z", "y", "x"]
+        poses = []
+        for pose, axis in zip(self.poses, axes):
+            rotation = rend_utils.rotation_matrix(axis=axis, angle_deg=180, device=device)
+            rotated_pose = rotation @ pose[:3, :3]
+
+            new_pose = pose.clone()
+            new_pose[:3, :3] = rotated_pose
+            poses.append(new_pose)
+        self.poses = torch.stack(poses)
+
         sketch_files = sorted(os.listdir(os.path.join(sketch_dir, 'sketches')))
         self.sketches = []
         self.bounding_boxes = []

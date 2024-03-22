@@ -350,3 +350,54 @@ def box_mask(masks, sketch_poses, sketch_intrinsics, resolution = 128):
         mask = mask & m
 
     return mask
+
+
+import torch
+
+def rotation_matrix(axis, angle_deg, device):
+    """
+    Generate a 3D rotation matrix using PyTorch.
+
+    Args:
+        axis (str): Axis of rotation, can be 'x', 'y', or 'z'.
+        angle_deg (float): The angle of rotation in degrees.
+
+    Returns:
+        torch.Tensor: A 3x3 rotation matrix.
+    """
+     # Convert angle_deg to a torch tensor
+    angle_deg_tensor = torch.tensor(angle_deg)
+
+    # Convert angle to radians using torch.deg2rad
+    angle_rad = torch.deg2rad(angle_deg_tensor)
+
+    # Compute sine and cosine of the angle
+    cos_theta = torch.cos(angle_rad)
+    sin_theta = torch.sin(angle_rad)
+
+    # Build the rotation matrix based on the specified axis
+    if axis == 'x':
+        rotation_matrix = torch.tensor([
+            [1, 0, 0],
+            [0, cos_theta, -sin_theta],
+            [0, sin_theta, cos_theta]
+        ])
+    elif axis == 'y':
+        rotation_matrix = torch.tensor([
+            [cos_theta, 0, sin_theta],
+            [0, 1, 0],
+            [-sin_theta, 0, cos_theta]
+        ])
+    elif axis == 'z':
+        rotation_matrix = torch.tensor([
+            [cos_theta, -sin_theta, 0],
+            [sin_theta, cos_theta, 0],
+            [0, 0, 1]
+        ])
+    else:
+        raise ValueError("Invalid axis. Please use 'x', 'y', or 'z'.")
+
+    # Cast the rotation matrix to float32 and move to device
+    rotation_matrix = rotation_matrix.to(torch.float32).to(device)
+
+    return rotation_matrix
