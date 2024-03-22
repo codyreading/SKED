@@ -32,3 +32,4 @@ checkpoints
 *ninja
 *SOURCES.txt
 *.so
+**__pycache__**
