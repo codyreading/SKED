@@ -15,8 +15,8 @@ eval_freq: 1
 exp_dir: ../exps/
 expname: car
 fov_range: !!python/tuple
-- 49.1
-- 49.1
+- 40
+- 60
 fp16: true
 hidden_dim: 64
 hidden_dim_bg: 64
@@ -36,7 +36,7 @@ preload: true
 print_freq: 1
 proximal_surface: 0.025
 radius_range: !!python/tuple
-- 2.5
+- 1.5
 - 2.5
 render_normals: true
 save_freq: 10

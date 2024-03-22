@@ -58,7 +58,7 @@ class Train:
         self.dataset = NeRFDataset(data_dir, self.opts, type='train', H = H, W = W)
         self.dataloader = self.dataset.dataloader()
 
-        val_scale = 1 if self.opts.train_type == 'rec' else 8
+        val_scale = 1 if self.opts.train_type == 'rec' else 4
         self.val_dataset = NeRFDataset(data_dir, self.opts, type='val', H = H * val_scale , W = W * val_scale)
         self.val_dataloader = self.val_dataset.dataloader()
         self.valiter = itertools.cycle(iter(self.val_dataloader))
@@ -127,6 +127,8 @@ class Train:
         if self.model.cuda_ray and self.train_type == 'rec':
             self.model.mark_untrained_grid(self.dataloader._data.poses, self.dataloader._data.intrinsics)
 
+        self.evaluate(0)
+
         pbar = tqdm.tqdm(total=self.opts.nepochs, bar_format='{desc}: {percentage:3.0f}% {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]')
         for epoch in range(1, self.opts.nepochs + 1):
             self.model.train()
@@ -168,8 +170,6 @@ class Train:
             B, _, C = gt.shape
         else:
             B, C = rays_o.shape[0],  3
-
-
 
         if self.train_type == 'rec':
             bg_color = torch.ones_like(gt)
@@ -227,8 +227,8 @@ class Train:
 
     @torch.no_grad()
     def eval_step(self, data):
-        rays_o = self.sketch_rays['rays_o'][0:1]
-        rays_d = self.sketch_rays['rays_d'][0:1]
+        rays_o = self.sketch_rays['rays_o'][1:2]
+        rays_d = self.sketch_rays['rays_d'][1:2]
         gt = data['gt']
 
         if self.train_type == 'rec':# [B, H, W, 3/4]
@@ -239,9 +239,9 @@ class Train:
         H, W = data['H'], data['W']
 
 
-        bg_color = 1
+        bg_color = torch.ones((H, W, 3)).to(rays_o.device).to(rays_o.dtype)
 
-        outputs = self.model.render(rays_o, rays_d, staged= self.opts.staged_rendering, bg_color=bg_color, perturb=False, force_all_rays = True)
+        outputs = self.model.render(rays_o, rays_d, staged= self.opts.staged_rendering, bg_color=bg_color,  disable_bg = True, perturb=False, force_all_rays = True)
 
         pred = outputs['image'].reshape(B, H, W, 3)
         pred_depth = outputs['depth'].reshape(B, H, W).unsqueeze(1)
