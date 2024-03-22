@@ -21,7 +21,7 @@ from scipy.spatial import KDTree
 
 class SketchLoss(nn.Module):
     def __init__(self, sketch_canvases, sketch_poses,
-                 sketch_intrinsics, proximal_surface,
+                 sketch_intrinsics, sketch_distances, proximal_surface,
                  use_kdtree = True, normalize = True, base_mesh = None,
                  nerf_gt = None, color_lambda = 5.):
         #sketch_canvases: (B, H, W) sketch canvases
@@ -36,10 +36,9 @@ class SketchLoss(nn.Module):
 
         self.sketch_poses = sketch_poses
         self.sketch_intrinsics = sketch_intrinsics
+        self.sketch_distances = sketch_distances
 
         self.normalize = normalize
-        self.use_kdtree = use_kdtree
-        self.precompute_sketch_points(normalize=normalize)
 
 
         self.proximal_surface = proximal_surface
@@ -57,17 +56,15 @@ class SketchLoss(nn.Module):
         # sigmas: (N) sigma values for each point
         # colors: (N, 3) colors for each point (optional). Can be None if we don't want to constrain the color
         # return: (N) sketch loss for each point
+        # TODO: Update this to only put occupancy in sketch areas
 
         with torch.no_grad():
             projected_points = torch.round(rend_utils.batch_proj_points2image(xyzs, self.sketch_poses, self.sketch_intrinsics)).float()#(B, N, 2)
             if self.normalize:
                 projected_points = projected_points / torch.tensor([self.H, self.W], dtype = torch.float32, device = projected_points.device).reshape(1, 1, 2)
-            if self.use_kdtree:
-                projected_points = projected_points.cpu().numpy()
 
-
-            min_dists = self.compute_min_dist(projected_points) #(B)
-            breakpoint()
+            projected_points = projected_points.unsqueeze(2) # (B, N, 1, 2)
+            min_dists = torch.nn.functional.grid_sample(input=self.sketch_distances, grid=projected_points, padding_mode="border")
             D = min_dists.mean(dim = 0) #(N)
 
 
@@ -95,38 +92,7 @@ class SketchLoss(nn.Module):
             color_loss = (torch.sum((colors - color_gt)**2, dim = -1) * weights).sum()
             loss = loss + color_loss * self.color_lambda
         return loss
-    def compute_min_dist(self, projected_points):
-        #projected_points: (B, N, 2) points projected to sketch canvases
-        #return: (B) min distance to sketch points
-        res = []
-        for i in range(self.num_sketches):
-            sketch_points = self.sketch_points[i]
-            current_projected_points = projected_points[i]
-            if self.use_kdtree:
-                kd_tree = self.kd_trees[i]
-                min_dists, _ = kd_tree.query(current_projected_points)
-                min_dists = torch.from_numpy(min_dists).float().to('cuda:0')
-            else:
-                dists = torch.cdist(current_projected_points.unsqueeze(0), sketch_points.unsqueeze(0), p=2).squeeze(0)
-                min_dists = dists.min(dim = -1)[0]
-            res.append(min_dists)
-            torch.cuda.empty_cache()
-        return torch.stack(res, dim = 0)
 
-    def precompute_sketch_points(self, normalize = True):
-        #determine pixel coordinates that are occupied in sketch canvases
-        self.sketch_points = []
-        self.kd_trees = []
-        for i in range(self.num_sketches):
-            sketch_points = torch.argwhere(self.sketch_canvases[i] > 0.5).float()[:, [1, 0]]
-            #(N, 2)
-            if normalize:
-                sketch_points = sketch_points.float() / torch.tensor([self.H, self.W], dtype = torch.float32, device = sketch_points.device).reshape(1, 2)
-            if self.use_kdtree:
-                sketch_points = sketch_points.cpu().numpy()
-                self.kd_trees.append(KDTree(sketch_points))
-
-            self.sketch_points.append(sketch_points)
 
     def compute_weights(self, D):
         #D: (N) distance to sketch points

@@ -116,7 +116,9 @@ class Train:
             gt_nerf.load_checkpoint(self.opts.checkpoint_path)
             gt_nerf.eval()
 
-            self.sketch_loss = SketchLoss(sketch_canvases, sketch_poses, sketch_intrinsics, self.opts.proximal_surface, use_kdtree = self.opts.use_kd_tree,  base_mesh=self.base_mesh, nerf_gt = gt_nerf, color_lambda = self.opts.color_lambda)
+            self.sketch_loss = SketchLoss(sketch_canvases, sketch_poses, sketch_intrinsics, sketch_distances=None,
+                                          proximal_surface=self.opts.proximal_surface, use_kdtree = self.opts.use_kd_tree,
+                                          base_mesh=self.base_mesh, nerf_gt = gt_nerf, color_lambda = self.opts.color_lambda)
 
             if self.opts.sil_lambda > 0:
                 self.sil_loss = SilhouetteLoss(sketch_canvases)
@@ -196,7 +198,7 @@ class Train:
             sp_loss = self.sparsity_lambda * sparsity_loss(weights_sum)
             loss += sp_loss
             loss_str += 'sparsity_loss: {:.4f}, '.format(sp_loss.item())
-      
+
         if not(self.sketch_loss is None) and self.opts.sketch_lambda > 0:
             sketch_loss = self.opts.sketch_lambda * self.sketch_loss(outputs['xyzs'], outputs['sigmas'], outputs['colors'])
             loss += sketch_loss
@@ -343,5 +345,3 @@ if __name__ == '__main__':
     trainer = Train(opts)
     trainer.run()
     a = 0
-
-

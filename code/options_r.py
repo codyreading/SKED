@@ -73,7 +73,7 @@ class TrainNGPOptions(BaseOptions):
         expname += '_{}'.format(text)
 
     #checkpoint options
-    checkpoint_path = '../data/cat/base_nerf/checkpoint.pth' #checkpoint to use from the base NeRF
+    checkpoint_path = None #checkpoint to use from the base NeRF
 
     #sketch options
     use_2d_sketch: bool = True
