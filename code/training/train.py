@@ -105,7 +105,7 @@ class Train:
         self.sketch_loss = None
         self.sil_loss = None
         if self.use_2d_sketch and self.opts.train_type == 'gen':
-            sketch_canvases, sketch_poses, sketch_intrinsics, sketch_bboxes, sketch_sils, sketch_rays = self.initialize_2d_sketches()
+            sketch_canvases, sketch_poses, sketch_intrinsics, sketch_bboxes, sketch_sils, sketch_rays, sketch_distances = self.initialize_2d_sketches()
             self.sketch_H, self.sketch_W = self.opts.sketch_H,  self.opts.sketch_W
             self.num_sketches = len(sketch_canvases)
             self.model.bbox2bitfield(sketch_bboxes, sketch_poses, sketch_intrinsics)
@@ -116,7 +116,7 @@ class Train:
             gt_nerf.load_checkpoint(self.opts.checkpoint_path)
             gt_nerf.eval()
 
-            self.sketch_loss = SketchLoss(sketch_canvases, sketch_poses, sketch_intrinsics, sketch_distances=None,
+            self.sketch_loss = SketchLoss(sketch_canvases, sketch_poses, sketch_intrinsics, sketch_distances=sketch_distances,
                                           proximal_surface=self.opts.proximal_surface, use_kdtree = self.opts.use_kd_tree,
                                           base_mesh=self.base_mesh, nerf_gt = gt_nerf, color_lambda = self.opts.color_lambda)
 
@@ -334,8 +334,8 @@ class Train:
             return
 
         self.sketches = sketch_utils.Sketches(sketch_path, H = self.opts.sketch_H, W = self.opts.sketch_W)
-        sketch_canvases, sketch_poses, sketch_intrinsics, sketch_bounding_boxes, sketch_silhouettes, sketch_rays = self.sketches.get_sketches()
-        return sketch_canvases, sketch_poses, sketch_intrinsics, sketch_bounding_boxes, sketch_silhouettes, sketch_rays
+        sketch_canvases, sketch_poses, sketch_intrinsics, sketch_bounding_boxes, sketch_silhouettes, sketch_rays, sketch_distances = self.sketches.get_sketches()
+        return sketch_canvases, sketch_poses, sketch_intrinsics, sketch_bounding_boxes, sketch_silhouettes, sketch_rays, sketch_distances
 
 
 

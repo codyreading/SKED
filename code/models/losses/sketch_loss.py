@@ -65,6 +65,7 @@ class SketchLoss(nn.Module):
 
             projected_points = projected_points.unsqueeze(2) # (B, N, 1, 2)
             min_dists = torch.nn.functional.grid_sample(input=self.sketch_distances, grid=projected_points, padding_mode="border")
+            min_dists = min_dists.squeeze(-1).squeeze(1) # B, 1, N, 1 -> B, N
             D = min_dists.mean(dim = 0) #(N)
 
 

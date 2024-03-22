@@ -72,6 +72,12 @@ class Sketches:
         ##precompute rays to speed up rendering
         self.rays = rend_utils.get_rays(self.poses, self.intrinsics, self.H, self.W, -1)
 
+        # Get distances
+        self.distances_file = os.path.join(sketch_dir, 'distances.pt')
+        self.distances = torch.load(self.distances_file)
+        self.distances = torch.from_numpy(self.distances).to(device, torch.float32)
+        self.distances = self.distances.unsqueeze(1)
+
     def get_sketches(self, indices=None):
         if indices is not None:
             return self.sketches[indices], self.poses[indices], torch.from_numpy(self.intrinsics).to(
@@ -79,7 +85,7 @@ class Sketches:
             self.silhouettes[indices], self.rays[indices]
         else:
             # return all sketches, poses, intrinsics
-            return self.sketches, self.poses, torch.from_numpy(self.intrinsics).to(self.sketches.device).reshape(1, 4).repeat(len(self.sketches), 1), self.bounding_boxes, self.silhouettes, self.rays
+            return self.sketches, self.poses, torch.from_numpy(self.intrinsics).to(self.sketches.device).reshape(1, 4).repeat(len(self.sketches), 1), self.bounding_boxes, self.silhouettes, self.rays, self.distances
 
 
 
