@@ -65,8 +65,9 @@ class SketchLoss(nn.Module):
             if self.use_kdtree:
                 projected_points = projected_points.cpu().numpy()
 
-            min_dists = self.compute_min_dist(projected_points) #(B)
 
+            min_dists = self.compute_min_dist(projected_points) #(B)
+            breakpoint()
             D = min_dists.mean(dim = 0) #(N)
 
 
@@ -131,9 +132,3 @@ class SketchLoss(nn.Module):
         #D: (N) distance to sketch points
         #return: (N) weight for each point
         return 1 - torch.exp(-(D ** 2) / (2 * (self.proximal_surface ** 2)))
-
-
-
-
-
-
